@@ -46,7 +46,7 @@ int main(void) {
             if (atualizacaoDeQuadros(&pausa, &mostrarPause, &con, &velocidadeJogadores, &GOL, &CONTATO, &golJogador1, &golJogador2, maximoGols)) {
                 desenharJogo(golJogador1, golJogador2, imagem);
             } else {
-                fimDeJogo(&estaNoJogo, &estaNosRecordes, &nickCount, &golJogador1, &golJogador2);
+                fimDeJogo(&estaNoJogo, &estaNosRecordes, &continuar, &nickCount, &golJogador1, &golJogador2);
             }
         } else {
             menuInicial(estaNosRecordes, &estaNoJogo, selecaoMenu, &continuar, &golJogador1, &golJogador2, &maximoGols);
