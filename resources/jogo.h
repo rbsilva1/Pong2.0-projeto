@@ -38,10 +38,16 @@ typedef struct nickVencedor
     struct nickVencedor *proximo;
 } nickVencedor;
 
-void menuInicial(int, int);
-void posicaoMenu(int*, int*, int*);
+typedef struct 
+{
+    int gol1;
+    int gol2;
+} Gol;
+
+void menuInicial(int, int, int, int*);
+void posicaoMenu(int*, int*, int*, int*);
 void comecarJogo();
-bool atualizacaoDeQuadros(bool*, int*, int*, int*, Sound*, Sound*, int*, int*);
+bool atualizacaoDeQuadros(bool*, int*, int*, int*, Sound*, Sound*, int*, int*, int);
 void fimDeJogo(int*, int*, int*, int*);
 void desenharJogo(int, int, Texture2D);
 void lerHistorico();
@@ -85,47 +91,86 @@ char* imprimirLista(nickVencedor *inicio){
     return nome;
 }
 
-void menuInicial(int estaNosRecordes, int selecaoMenu){
-    if (!estaNosRecordes) {
+Gol posicaoMenuHistorico(int* estaContinuar, int* estaNoJogo, int* selecaoMenuHistorico) {
+    Gol gols = (Gol) { 0, 0 };
+    if (*estaContinuar) {
+        if (IsKeyPressed(KEY_ENTER)) {
+            for (int i = 0; i <= 5; i++) {
+                if (*selecaoMenuHistorico == 5) {
+                    *estaContinuar = 0;
+                    return gols;
+                } else if (*selecaoMenuHistorico == i) {
+                    gols = (Gol){ historico[*selecaoMenuHistorico].gol1, historico[*selecaoMenuHistorico].gol2 };
+                    return gols;
+                }
+            }
+        }
+    } else {
+        if (IsKeyPressed(KEY_ENTER)) {
+            *estaContinuar = 0;
+        }
+        return gols;
+    }
+}
+
+void menuInicial(int estaNosRecordes, int selecaoMenu, int estaContinuar, int* selecaoMenuHistorico){
+    if (!estaNosRecordes && !estaContinuar) {
         DrawText("Pong", LARGURA_TELA / 2 - MeasureText("Pong", 70) / 2, 80, 70, DARKBLUE);
 
         if (selecaoMenu == 0) {
             DrawText("- Jogar -", LARGURA_TELA / 2 - MeasureText("- Jogar -", 55) / 2, 300, 55, WHITE);
             DrawText("Recordes", LARGURA_TELA / 2 - MeasureText("Recordes", 50) / 2, 400, 50, WHITE);
-        } else {
+            DrawText("Continuar", LARGURA_TELA / 2 - MeasureText("Continuar", 50) / 2, 500, 50, WHITE);
+        } else if (selecaoMenu == 1){
             DrawText("Jogar", LARGURA_TELA / 2 - MeasureText("Jogar", 50) / 2, 300, 50, WHITE);
             DrawText("- Recordes -", LARGURA_TELA / 2 - MeasureText("- Recordes -", 55) / 2, 400, 55, WHITE);
+            DrawText("Continuar", LARGURA_TELA / 2 - MeasureText("Continuar", 50) / 2, 500, 50, WHITE);
+        } else {
+            DrawText("Jogar", LARGURA_TELA / 2 - MeasureText("Jogar", 50) / 2, 300, 50, WHITE);
+            DrawText("Recordes", LARGURA_TELA / 2 - MeasureText("Recordes", 50) / 2, 400, 50, WHITE);
+            DrawText("- Continuar -", LARGURA_TELA / 2 - MeasureText("- Continuar -", 55) / 2, 500, 55, WHITE);
         }
-    } else {
+    } else if (estaNosRecordes) {
         for (int i = 0; i < 5; ++i) {
             char temp[16];
             strcpy(temp, TextFormat("%s        %i X %i", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2));
             DrawText(temp, LARGURA_TELA / 2 - MeasureText(temp, 50) / 2, i * 100 + 50, 50, WHITE);
         }
-        DrawText("- Voltar -", LARGURA_TELA / 2 - MeasureText("- Voltar -", 50) / 2, 520, 50, WHITE);
-    }
 
+        DrawText("- Voltar -", LARGURA_TELA / 2 - MeasureText("- Voltar -", 50) / 2, 520, 50, WHITE);
+    } else {
+        for (int i = 0; i < 5; ++i) {
+            char temp[16];
+            if (*selecaoMenuHistorico == i) {
+                strcpy(temp, TextFormat("> %s        %i X %i <", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2));
+                DrawText(temp, LARGURA_TELA / 2 - MeasureText(temp, 55) / 2, i * 100 + 50, 55, WHITE);
+            } else {
+                strcpy(temp, TextFormat("%s        %i X %i", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2));
+                DrawText(temp, LARGURA_TELA / 2 - MeasureText(temp, 50) / 2, i * 100 + 50, 50, WHITE);
+            }
+            DrawText("- Voltar -", LARGURA_TELA / 2 - MeasureText("- Voltar -", 50) / 2, 520, 50, WHITE);
+        }
+    }
 }
 
-void posicaoMenu(int* selecaoMenu, int* estaNosRecordes, int* estaNoJogo) {
-    if (!(*estaNosRecordes)) {
-        if (IsKeyPressed(KEY_DOWN)) {
-            *selecaoMenu = 1;
-        } else if (IsKeyPressed(KEY_UP)) {
-            *selecaoMenu = 0;
-        }
-
+void posicaoMenu(int* selecaoMenu, int* estaNosRecordes, int* estaNoJogo, int* estaContinuar) {
+    if (!(*estaNosRecordes) && !(*estaContinuar)) {
+        if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 0) *selecaoMenu = 1;
+        else if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 1) *selecaoMenu = 2;
+        else if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 2) *selecaoMenu = 0;
+        else if (IsKeyPressed(KEY_UP) && *selecaoMenu == 0) *selecaoMenu = 2;
+        else if (IsKeyPressed(KEY_UP) && *selecaoMenu == 1) *selecaoMenu = 0;
+        else if (IsKeyPressed(KEY_UP) && *selecaoMenu == 2) *selecaoMenu = 1;
+        
         if (IsKeyPressed(KEY_ENTER)) {
-            if (*selecaoMenu == 0) {
-                *estaNoJogo = 1;
-            } else {
-                *estaNosRecordes = 1;
-            }
+            if (*selecaoMenu == 0) *estaNoJogo = 1;
+            else if (*selecaoMenu == 1) *estaNosRecordes = 1;
+            else *estaContinuar = 1;
         }
+    } else if (*estaNosRecordes){
+        if (IsKeyPressed(KEY_ENTER)) *estaNosRecordes = 0;
     } else {
-        if (IsKeyPressed(KEY_ENTER)) {
-            *estaNosRecordes = 0;
-        }
+        if (IsKeyPressed(KEY_ENTER)) *estaContinuar = 0;
     }
 }
 
@@ -277,7 +322,7 @@ void comecarJogo(){
 }
 
 // função do tipo booleana que retorna true ou false quando atinge o número máximo de gol
-bool atualizacaoDeQuadros(bool* pausa, int* mostrarPause, int* con, int* velocidadeJogadores, Sound* GOL, Sound* CONTATO, int* golJogador1, int* golJogador2){
+bool atualizacaoDeQuadros(bool* pausa, int* mostrarPause, int* con, int* velocidadeJogadores, Sound* GOL, Sound* CONTATO, int* golJogador1, int* golJogador2, int maximoGols){
     // se a tecla "P" do teclado for acionada o jogo pausa e vice e versa
     if(IsKeyPressed(KEY_P) && *mostrarPause == 1) *pausa = !*pausa;
 
@@ -387,7 +432,7 @@ bool atualizacaoDeQuadros(bool* pausa, int* mostrarPause, int* con, int* velocid
     } 
 
     // se atingir o limite máximo de gols o jogo acaba e a função retorna false
-    if (*golJogador1 >= 7 || *golJogador2 >= 7) {
+    if (*golJogador1 >= maximoGols || *golJogador2 >= maximoGols) {
         *mostrarPause = 0;
         return false; 
     }
