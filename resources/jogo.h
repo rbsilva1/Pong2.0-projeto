@@ -48,15 +48,16 @@ void menuInicial(int, int*, int, int*, int*, int*, int*);
 void posicaoMenu(int*, int*, int*, int*);
 void comecarJogo();
 bool atualizacaoDeQuadros(bool*, int*, int*, int*, Sound*, Sound*, int*, int*, int);
-void fimDeJogo(int*, int*, int*, int*);
+void fimDeJogo(int*, int*, int*, int*, int*);
 void desenharJogo(int, int, Texture2D);
 void lerHistorico();
 void salvarHistorico();
-char* imprimirLista(nickVencedor*);
+char* imprimirNickJogador(nickVencedor*);
 int addInPos(nickVencedor**, nickVencedor, int);
 int delFinal(nickVencedor**);
 nickVencedor montaStruct(char);
 int randomizer(int x);
+Gol reiniciarJogoAnterior(int);
 
 Historico historico[5] = { 0 };
 static Jogador1 jogador1 = { 0 };
@@ -64,6 +65,7 @@ static Jogador2 jogador2 = { 0 };
 static Bola bola = { 0 };
 nickVencedor *lista = NULL;
     
+// Salva infos do jogador e o placar no arquivo
 void salvarHistorico() {
     FILE* historicoArquivo = fopen("resources/historico", "w");
     if (historicoArquivo == NULL) return;
@@ -75,22 +77,23 @@ void salvarHistorico() {
     fclose(historicoArquivo);
 }
 
-char* imprimirLista(nickVencedor *inicio){
+// Pega a cabeça da lista dinamica de char do nome do jogador e imprime na tela
+char* imprimirNickJogador(nickVencedor *inicio){
     nickVencedor *noAtual = inicio; 
-    char *nome;
-    nome = calloc(5, sizeof(char));
+    char *nome = calloc(5, sizeof(char));
 
-    //caminha ate o final
+    // Caminha ate o final
     while (noAtual != NULL){
         size_t tamanho = strlen(nome);
         nome[tamanho] = noAtual->nickVencedor;
-        nome[tamanho + 1] = '\0'; //recolocar terminador
+        nome[tamanho + 1] = '\0';
         noAtual = noAtual->proximo;
     }  
 
     return nome;
 }
 
+// Cria uma struct com o placar da ultima partida jogada
 Gol reiniciarJogoAnterior(int continuar) {
     Gol gols = (Gol) { 0, 0 };
     
@@ -103,7 +106,7 @@ Gol reiniciarJogoAnterior(int continuar) {
 }
 
 void menuInicial(int estaNosRecordes, int* estaNoJogo, int selecaoMenu, int* continuar, int* golJogador1, int* golJogador2, int* maximoGols){
-    if (!estaNosRecordes && !*continuar) {
+    if (!estaNosRecordes && !*continuar) { // Verifica se o jogador está na aba de HISTORICO ou CONTINUAR
         DrawText("Pong", LARGURA_TELA / 2 - MeasureText("Pong", 70) / 2, 80, 70, DARKBLUE);
 
         if (selecaoMenu == 0) {
@@ -119,7 +122,7 @@ void menuInicial(int estaNosRecordes, int* estaNoJogo, int selecaoMenu, int* con
             DrawText("Recordes", LARGURA_TELA / 2 - MeasureText("Recordes", 50) / 2, 400, 50, WHITE);
             DrawText("- Continuar -", LARGURA_TELA / 2 - MeasureText("- Continuar -", 55) / 2, 500, 55, WHITE);
         }
-    } else if (estaNosRecordes) {
+    } else if (estaNosRecordes) { // Se estiver no HISTORICO, vai printa-lo na tela
         for (int i = 0; i < 5; ++i) {
             char temp[16];
             strcpy(temp, TextFormat("%s        %i X %i", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2));
@@ -127,7 +130,7 @@ void menuInicial(int estaNosRecordes, int* estaNoJogo, int selecaoMenu, int* con
         }
 
         DrawText("- Voltar -", LARGURA_TELA / 2 - MeasureText("- Voltar -", 50) / 2, 520, 50, WHITE);
-    } else {
+    } else { // Se estiver na aba CONTINUAR, retorna ao último jogo.
         Gol retorno = reiniciarJogoAnterior(*continuar);
         if (retorno.gol1 != 0 || retorno.gol2 != 0) {
             *golJogador1 = retorno.gol1;
@@ -139,8 +142,10 @@ void menuInicial(int estaNosRecordes, int* estaNoJogo, int selecaoMenu, int* con
     }
 }
 
+// Dependendo da escolha do usuário ele define se ele está no jogo ou nos recordes e inicia algum deles
 void posicaoMenu(int* selecaoMenu, int* estaNosRecordes, int* estaNoJogo, int* continuar) {
     if (!(*estaNosRecordes) && !(*continuar)) {
+        // Funcionalidade de escolha no menu alternando entre seta para baixo (KEY_DOWN) e para cima (KEY_UP)
         if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 0) *selecaoMenu = 1;
         else if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 1) *selecaoMenu = 2;
         else if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 2) *selecaoMenu = 0;
@@ -160,6 +165,7 @@ void posicaoMenu(int* selecaoMenu, int* estaNosRecordes, int* estaNoJogo, int* c
     }
 }
 
+// Monta uma struct do tipo nickVencedor com a uma nova letra;
 nickVencedor montaStruct(char novaLetra) {
     nickVencedor novaLetraStruct;
 
@@ -167,6 +173,7 @@ nickVencedor montaStruct(char novaLetra) {
     return novaLetraStruct;
 }
 
+// Adiciona a letra numa posição indicada da lista
 int addInPos(nickVencedor **inicio, nickVencedor item, int posicao){
     nickVencedor *novoNo = calloc(5, sizeof(nickVencedor));
 
@@ -208,6 +215,7 @@ int addInPos(nickVencedor **inicio, nickVencedor item, int posicao){
     }    
 }
 
+// Deleta a ultima letra da lista a cada chamada
 int delFinal(nickVencedor **inicio){
     if (*inicio != NULL) {
         if ((*inicio)->proximo == NULL) { //lista com apenas 1 elemento
@@ -234,25 +242,28 @@ int delFinal(nickVencedor **inicio){
     }
 }
 
-void fimDeJogo(int* estaNoJogo, int* nickCount, int* golJogador1, int* golJogador2) {
+void fimDeJogo(int* estaNoJogo, int* estaNosRecordes, int* nickCount, int* golJogador1, int* golJogador2) {
+    // Desenha o fim do jogo e a partir da lista do Nick do vencedor vai mostrando o Nick a medida em que o usuario digita.
     DrawText("Fim de Jogo", LARGURA_TELA / 2 - MeasureText("Fim de Jogo", 50) / 2, ALTURA_TELA / 2 - 50, 50, DARKBLUE);    
-    DrawText(imprimirLista(lista), LARGURA_TELA / 2 - MeasureText(imprimirLista(lista), 50) / 2, ALTURA_TELA / 2 + 50, 50, DARKBLUE);
+    DrawText(imprimirNickJogador(lista), LARGURA_TELA / 2 - MeasureText(imprimirNickJogador(lista), 50) / 2, ALTURA_TELA / 2 + 50, 50, DARKBLUE);
     
     int key = GetCharPressed();
 
+    // Analisa se a letra está dentro de um intervalo na ASCII table e, também, verifica se o nick já não está completo
     if (key >= 65 && key <= 125 && *nickCount < 5) {
-        addInPos(&lista, montaStruct((char) key), *nickCount);
-        *nickCount += 1;
+        addInPos(&lista, montaStruct((char) key), *nickCount); // Adiciona na ultima posição do nick
+        *nickCount += 1; // Atualiza a ultima posição do nick
     }
 
     if (IsKeyPressed(KEY_BACKSPACE)) {
-        *nickCount -= 1;
+        *nickCount -= 1; // Diminui o nickCount
         if (*nickCount < 0) *nickCount = 0;
-        delFinal(&lista);
+        delFinal(&lista); // Deleta a última letra desta lista
     }
 
     if (IsKeyPressed(KEY_ENTER) && *nickCount == 5) {
         int pos = -1;
+        // Verifica se já tem algum jogador na posição, e passa para a próxima colocando o ultimo para a frente no HISTORICO
         for (int i = 0; i < 5; ++i) {
             if (pos == -1) {
                 pos = i;
@@ -263,11 +274,12 @@ void fimDeJogo(int* estaNoJogo, int* nickCount, int* golJogador1, int* golJogado
             }  
         }
 
+        // Cópia da lista e termina de passar o jogador para a última partida no histórico
         if (pos != -1) {
             Historico temp[5] = { historico[0], historico[1], historico[2], historico[3], historico[4] };
             temp[pos].gol1 = *golJogador1;
             temp[pos].gol2 = *golJogador2;
-            strcpy(temp[pos].nickVencedor, imprimirLista(lista));
+            strcpy(temp[pos].nickVencedor, imprimirNickJogador(lista));
 
             for (int i = pos + 1; i < 5; ++i) {
                 temp[i] = historico[i - 1];
@@ -280,11 +292,14 @@ void fimDeJogo(int* estaNoJogo, int* nickCount, int* golJogador1, int* golJogado
 
         salvarHistorico();
         
+        // Reseta as configs iniciais
         *nickCount = 0;
         *golJogador1 = 0;
         *golJogador2 = 0;
         *estaNoJogo = 0;
+        *estaNosRecordes = 0;
 
+        // Zera a lista para usa-la novamente depois
         for (int i = 0; i < 5; i++) {
             delFinal(&lista);
         }
@@ -297,6 +312,7 @@ int randomizer(int x) {
     return rand() % x;
 }
 
+// Função que inicia as posições dos jogadores e da bola, a velocidade da bola, o tamanho da bola e se ela está ativa
 void comecarJogo(){
     jogador1.posicao = (Vector2){50, (ALTURA_TELA - 180) / 2 + (ALTURA_JOGADOR / 2)};
     jogador2.posicao = (Vector2){LARGURA_TELA - 50, (ALTURA_TELA - 180) / 2 + (ALTURA_JOGADOR / 2)};
@@ -428,6 +444,7 @@ bool atualizacaoDeQuadros(bool* pausa, int* mostrarPause, int* con, int* velocid
     } 
 }
 
+// Função que caso o arquivo de save não exista ele o cria e se ele existir, lê suas informações
 void lerHistorico() {
     if (!FileExists("resources/historico")) {
         SaveFileText("resources/historico", "AAAAA00\nBBBBB00\nCCCCC00\nDDDDD00\nEEEEE00");
@@ -444,16 +461,21 @@ void lerHistorico() {
 
 
 void desenharJogo(int golJogador1, int golJogador2, Texture2D imagem){
+    // Usa as posições dos jogadores para desenhá-los no campo
     Rectangle Jogador1 = { jogador1.posicao.x, jogador1.posicao.y, LARGURA_JOGADOR, ALTURA_JOGADOR } ;
     Rectangle Jogador2 = { jogador2.posicao.x, jogador2.posicao.y, LARGURA_JOGADOR, ALTURA_JOGADOR } ;
 
+    // Desenha o campo
     DrawTexture(imagem, -43, 0, RAYWHITE);
 
+    // Desenha os jogadores
     DrawRectangleRounded(Jogador1, 20, 4, YELLOW);
     DrawRectangleRounded(Jogador2, 20, 4, BLACK);
 
+    // Desenha a bola
     DrawCircleV(bola.posicao, bola.raio, BLUE);
 
+    // Desenha o placar
     DrawText(TextFormat("%d", golJogador1), LARGURA_TELA/ 4, 50, 70, WHITE);
     DrawText(TextFormat("%d", golJogador2), LARGURA_TELA/ 2 + LARGURA_TELA/4, 50, 70, WHITE); 
 }   
