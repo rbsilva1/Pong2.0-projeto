@@ -48,7 +48,7 @@ void menuInicial(int, int*, int, int*, int*, int*, int*);
 void posicaoMenu(int*, int*, int*, int*);
 void comecarJogo();
 bool atualizacaoDeQuadros(bool*, int*, int*, int*, Sound*, Sound*, int*, int*, int);
-void fimDeJogo(int*, int*, int*, int*, int*);
+void fimDeJogo(int*, int*, int*, int*, int*, int*);
 void desenharJogo(int, int, Texture2D);
 void lerHistorico();
 void salvarHistorico();
@@ -64,16 +64,16 @@ static Jogador1 jogador1 = { 0 };
 static Jogador2 jogador2 = { 0 };
 static Bola bola = { 0 };
 nickVencedor *lista = NULL;
-    
+
 // Salva infos do jogador e o placar no arquivo
 void salvarHistorico() {
-    FILE* historicoArquivo = fopen("resources/historico", "w");
+    FILE* historicoArquivo = fopen("resources/historico.csv", "w+");
     if (historicoArquivo == NULL) return;
 
-    for (int i = 0; i < 5; ++i) {
-        fprintf(historicoArquivo, "%s%i%i\n", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2);
+    for (int i = 0; i < 5; i++) {
+        fprintf(historicoArquivo, "%s;%i;%i\n", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2);
     }
-
+    
     fclose(historicoArquivo);
 }
 
@@ -242,7 +242,7 @@ int delFinal(nickVencedor **inicio){
     }
 }
 
-void fimDeJogo(int* estaNoJogo, int* estaNosRecordes, int* nickCount, int* golJogador1, int* golJogador2) {
+void fimDeJogo(int* estaNoJogo, int* estaNosRecordes, int* continuar, int* nickCount, int* golJogador1, int* golJogador2) {
     // Desenha o fim do jogo e a partir da lista do Nick do vencedor vai mostrando o Nick a medida em que o usuario digita.
     DrawText("Fim de Jogo", LARGURA_TELA / 2 - MeasureText("Fim de Jogo", 50) / 2, ALTURA_TELA / 2 - 50, 50, DARKBLUE);    
     DrawText(imprimirNickJogador(lista), LARGURA_TELA / 2 - MeasureText(imprimirNickJogador(lista), 50) / 2, ALTURA_TELA / 2 + 50, 50, DARKBLUE);
@@ -290,6 +290,7 @@ void fimDeJogo(int* estaNoJogo, int* estaNosRecordes, int* nickCount, int* golJo
             }
         }
 
+
         salvarHistorico();
         
         // Reseta as configs iniciais
@@ -298,6 +299,7 @@ void fimDeJogo(int* estaNoJogo, int* estaNosRecordes, int* nickCount, int* golJo
         *golJogador2 = 0;
         *estaNoJogo = 0;
         *estaNosRecordes = 0;
+        *continuar = 0;
 
         // Zera a lista para usa-la novamente depois
         for (int i = 0; i < 5; i++) {
@@ -339,8 +341,10 @@ bool atualizacaoDeQuadros(bool* pausa, int* mostrarPause, int* con, int* velocid
                 // define a velocidade da bola de forma aleatória
                 if(randomizer(10) > 5){
                     bola.velocidade = (Vector2){-5, randomizer(6) + 1};
+                    if(randomizer(100) > 50) bola.velocidade.y *= -1;
                 } else {
                     bola.velocidade = (Vector2){5, randomizer(6) + 1};
+                    if(randomizer(100) > 50) bola.velocidade.y *= -1;
                 }
             }
         }
@@ -446,17 +450,19 @@ bool atualizacaoDeQuadros(bool* pausa, int* mostrarPause, int* con, int* velocid
 
 // Função que caso o arquivo de save não exista ele o cria e se ele existir, lê suas informações
 void lerHistorico() {
-    if (!FileExists("resources/historico")) {
-        SaveFileText("resources/historico", "AAAAA00\nBBBBB00\nCCCCC00\nDDDDD00\nEEEEE00");
+    if (!(FileExists("resources/historico.csv"))) {
+        SaveFileText("resources/historico.csv", "AAAAA;0;0\nBBBBB;0;0\nCCCCC;0;0\nDDDDD;0;0\nEEEEE;0;0");
     }
 
-    char* historicoTexto = LoadFileText("resources/historico");
-
-    for (int i = 0, j = 0; j < 5; i += 8, ++j) {
-        strncpy(historico[j].nickVencedor, historicoTexto + i, 5);
-        historico[j].gol1 = historicoTexto[i + 5] - '0';
-        historico[j].gol2 = historicoTexto[i + 6] - '0';
+    FILE *pontArquivo = fopen("resources/historico.csv", "r+");
+    
+    if (pontArquivo != NULL) {
+        for (int i = 0; i < 5; i++) {
+            fscanf(pontArquivo, "%5c;%d;%d\n", historico[i].nickVencedor, &historico[i].gol1, &historico[i].gol2);
+        }
     }
+    
+    fclose(pontArquivo);
 }
 
 
