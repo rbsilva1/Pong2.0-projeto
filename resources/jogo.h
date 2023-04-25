@@ -44,7 +44,7 @@ typedef struct
     int gol2;
 } Gol;
 
-void menuInicial(int, int, int, int*);
+void menuInicial(int, int*, int, int*, int*, int*, int*);
 void posicaoMenu(int*, int*, int*, int*);
 void comecarJogo();
 bool atualizacaoDeQuadros(bool*, int*, int*, int*, Sound*, Sound*, int*, int*, int);
@@ -91,30 +91,19 @@ char* imprimirLista(nickVencedor *inicio){
     return nome;
 }
 
-Gol posicaoMenuHistorico(int* estaContinuar, int* estaNoJogo, int* selecaoMenuHistorico) {
+Gol reiniciarJogoAnterior(int continuar) {
     Gol gols = (Gol) { 0, 0 };
-    if (*estaContinuar) {
-        if (IsKeyPressed(KEY_ENTER)) {
-            for (int i = 0; i <= 5; i++) {
-                if (*selecaoMenuHistorico == 5) {
-                    *estaContinuar = 0;
-                    return gols;
-                } else if (*selecaoMenuHistorico == i) {
-                    gols = (Gol){ historico[*selecaoMenuHistorico].gol1, historico[*selecaoMenuHistorico].gol2 };
-                    return gols;
-                }
-            }
-        }
+    
+    if (continuar) {
+        gols = (Gol){ historico[0].gol1, historico[0].gol2 };
+        return gols;  
     } else {
-        if (IsKeyPressed(KEY_ENTER)) {
-            *estaContinuar = 0;
-        }
         return gols;
     }
 }
 
-void menuInicial(int estaNosRecordes, int selecaoMenu, int estaContinuar, int* selecaoMenuHistorico){
-    if (!estaNosRecordes && !estaContinuar) {
+void menuInicial(int estaNosRecordes, int* estaNoJogo, int selecaoMenu, int* continuar, int* golJogador1, int* golJogador2, int* maximoGols){
+    if (!estaNosRecordes && !*continuar) {
         DrawText("Pong", LARGURA_TELA / 2 - MeasureText("Pong", 70) / 2, 80, 70, DARKBLUE);
 
         if (selecaoMenu == 0) {
@@ -139,22 +128,19 @@ void menuInicial(int estaNosRecordes, int selecaoMenu, int estaContinuar, int* s
 
         DrawText("- Voltar -", LARGURA_TELA / 2 - MeasureText("- Voltar -", 50) / 2, 520, 50, WHITE);
     } else {
-        for (int i = 0; i < 5; ++i) {
-            char temp[16];
-            if (*selecaoMenuHistorico == i) {
-                strcpy(temp, TextFormat("> %s        %i X %i <", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2));
-                DrawText(temp, LARGURA_TELA / 2 - MeasureText(temp, 55) / 2, i * 100 + 50, 55, WHITE);
-            } else {
-                strcpy(temp, TextFormat("%s        %i X %i", historico[i].nickVencedor, historico[i].gol1, historico[i].gol2));
-                DrawText(temp, LARGURA_TELA / 2 - MeasureText(temp, 50) / 2, i * 100 + 50, 50, WHITE);
-            }
-            DrawText("- Voltar -", LARGURA_TELA / 2 - MeasureText("- Voltar -", 50) / 2, 520, 50, WHITE);
-        }
+        Gol retorno = reiniciarJogoAnterior(*continuar);
+        if (retorno.gol1 != 0 || retorno.gol2 != 0) {
+            *golJogador1 = retorno.gol1;
+            *golJogador2 = retorno.gol2;
+            *maximoGols *= 2; 
+            *continuar = 0;
+            *estaNoJogo = 1;
+        } 
     }
 }
 
-void posicaoMenu(int* selecaoMenu, int* estaNosRecordes, int* estaNoJogo, int* estaContinuar) {
-    if (!(*estaNosRecordes) && !(*estaContinuar)) {
+void posicaoMenu(int* selecaoMenu, int* estaNosRecordes, int* estaNoJogo, int* continuar) {
+    if (!(*estaNosRecordes) && !(*continuar)) {
         if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 0) *selecaoMenu = 1;
         else if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 1) *selecaoMenu = 2;
         else if (IsKeyPressed(KEY_DOWN) && *selecaoMenu == 2) *selecaoMenu = 0;
@@ -165,12 +151,12 @@ void posicaoMenu(int* selecaoMenu, int* estaNosRecordes, int* estaNoJogo, int* e
         if (IsKeyPressed(KEY_ENTER)) {
             if (*selecaoMenu == 0) *estaNoJogo = 1;
             else if (*selecaoMenu == 1) *estaNosRecordes = 1;
-            else *estaContinuar = 1;
+            else *continuar = 1;
         }
     } else if (*estaNosRecordes){
         if (IsKeyPressed(KEY_ENTER)) *estaNosRecordes = 0;
     } else {
-        if (IsKeyPressed(KEY_ENTER)) *estaContinuar = 0;
+        if (IsKeyPressed(KEY_ENTER)) *continuar = 0;
     }
 }
 

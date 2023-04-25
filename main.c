@@ -24,13 +24,12 @@ int main(void) {
     SetSoundVolume(CONTATO, 0.7);
     
     // Declaração de variaveis
-    int selecaoMenuHistorico = 0;
     int nickCount = 0;
     int golJogador1 = 0, golJogador2 = 0, maximoGols = 7;
     bool pausa = false;
     int con = 0;
     int velocidadeJogadores = 5;
-    int selecaoMenu = 0, estaNosRecordes = 0, estaNoJogo = 0, estaContinuar = 0;
+    int selecaoMenu = 0, estaNosRecordes = 0, estaNoJogo = 0, continuar = 0;
     int mostrarPause = 1;
     Texture2D imagem = LoadTexture("resources/campo.png");
 
@@ -41,15 +40,7 @@ int main(void) {
         BeginDrawing();
         ClearBackground(DARKGREEN);
 
-        posicaoMenu(&selecaoMenu, &estaNosRecordes, &estaNoJogo, &estaContinuar);
-
-        Gol retorno = posicaoMenuHistorico(&estaContinuar, &estaNoJogo, &selecaoMenuHistorico);
-        if (retorno.gol1 != 0 || retorno.gol2 != 0) {
-            golJogador1 = retorno.gol1;
-            golJogador2 = retorno.gol2;
-            maximoGols *= 2; 
-            estaNoJogo = 1;
-        } 
+        posicaoMenu(&selecaoMenu, &estaNosRecordes, &estaNoJogo, &continuar);
 
         if(estaNoJogo){
             if (atualizacaoDeQuadros(&pausa, &mostrarPause, &con, &velocidadeJogadores, &GOL, &CONTATO, &golJogador1, &golJogador2, maximoGols)) {
@@ -58,7 +49,7 @@ int main(void) {
                 fimDeJogo(&estaNoJogo, &nickCount, &golJogador1, &golJogador2);
             }
         } else {
-            menuInicial(estaNosRecordes, selecaoMenu, estaContinuar, &selecaoMenuHistorico);
+            menuInicial(estaNosRecordes, &estaNoJogo, selecaoMenu, &continuar, &golJogador1, &golJogador2, &maximoGols);
         }
 
 
